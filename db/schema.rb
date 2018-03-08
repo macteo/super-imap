@@ -11,11 +11,22 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150611134232) do
+ActiveRecord::Schema.define(version: 20180202163003) do
 
   # These are extensions that must be enabled in order to support this database
+  enable_extension "hstore"
   enable_extension "plpgsql"
-  enable_extension "pg_stat_statements"
+
+# Could not dump table "accounts" because of following StandardError
+#   Unknown type 'jsonb' for column 'integrations'
+
+  create_table "accounts_users", id: false, force: true do |t|
+    t.integer "user_id",    null: false
+    t.integer "account_id", null: false
+  end
+
+  add_index "accounts_users", ["account_id", "user_id"], name: "index_accounts_users_on_account_id_and_user_id", unique: true, using: :btree
+  add_index "accounts_users", ["user_id", "account_id"], name: "index_accounts_users_on_user_id_and_account_id", using: :btree
 
   create_table "active_admin_comments", force: true do |t|
     t.string   "namespace"
@@ -51,6 +62,258 @@ ActiveRecord::Schema.define(version: 20150611134232) do
   add_index "admin_users", ["email"], name: "index_admin_users_on_email", unique: true, using: :btree
   add_index "admin_users", ["reset_password_token"], name: "index_admin_users_on_reset_password_token", unique: true, using: :btree
 
+  create_table "api_keys", force: true do |t|
+    t.integer  "account_id"
+    t.string   "token",      limit: nil
+    t.datetime "created_at",             null: false
+    t.datetime "updated_at",             null: false
+  end
+
+  add_index "api_keys", ["account_id"], name: "index_api_keys_on_account_id", using: :btree
+
+  create_table "ar_internal_metadata", primary_key: "key", force: true do |t|
+    t.string   "value",      limit: nil
+    t.datetime "created_at",             null: false
+    t.datetime "updated_at",             null: false
+  end
+
+  create_table "authorized_facebook_pages", force: true do |t|
+    t.integer  "account_id"
+    t.string   "page_id",    limit: nil
+    t.string   "token",      limit: nil
+    t.string   "name",       limit: nil
+    t.datetime "created_at",             null: false
+    t.datetime "updated_at",             null: false
+  end
+
+  add_index "authorized_facebook_pages", ["account_id"], name: "index_authorized_facebook_pages_on_account_id", using: :btree
+
+# Could not dump table "automation_actions" because of following StandardError
+#   Unknown type 'jsonb' for column 'email_json'
+
+# Could not dump table "automation_automatic_messages" because of following StandardError
+#   Unknown type 'jsonb' for column 'email_json'
+
+  create_table "automation_sequences", force: true do |t|
+    t.string   "title",                 limit: nil
+    t.decimal  "open_rate",                         default: 0.0
+    t.decimal  "click_rate",                        default: 0.0
+    t.integer  "subscribers_count",                 default: 0
+    t.integer  "messages_count",                    default: 0
+    t.string   "creator_type",          limit: nil
+    t.integer  "creator_id"
+    t.datetime "created_at",                                        null: false
+    t.datetime "updated_at",                                        null: false
+    t.integer  "account_id"
+    t.integer  "status",                            default: 0
+    t.integer  "delivery_hour"
+    t.boolean  "dont_send_on_weekends",             default: false
+  end
+
+  add_index "automation_sequences", ["account_id"], name: "index_automation_sequences_on_account_id", using: :btree
+  add_index "automation_sequences", ["creator_type", "creator_id"], name: "index_automation_sequences_on_creator_type_and_creator_id", using: :btree
+
+  create_table "automation_subscribers", force: true do |t|
+    t.integer  "person_id"
+    t.integer  "sequence_id"
+    t.integer  "next_action_id"
+    t.datetime "next_action_at"
+    t.integer  "status"
+    t.datetime "created_at",                     null: false
+    t.datetime "updated_at",                     null: false
+    t.boolean  "processing",     default: false
+  end
+
+  add_index "automation_subscribers", ["next_action_id"], name: "index_automation_subscribers_on_next_action_id", using: :btree
+  add_index "automation_subscribers", ["person_id"], name: "index_automation_subscribers_on_person_id", using: :btree
+  add_index "automation_subscribers", ["sequence_id"], name: "index_automation_subscribers_on_sequence_id", using: :btree
+
+  create_table "automation_triggers", force: true do |t|
+    t.integer  "account_id"
+    t.string   "triggable_type",  limit: nil
+    t.integer  "triggable_id"
+    t.string   "type",            limit: 50
+    t.hstore   "additional_data"
+    t.datetime "created_at",                  null: false
+    t.datetime "updated_at",                  null: false
+    t.integer  "direction"
+  end
+
+  add_index "automation_triggers", ["account_id"], name: "index_automation_triggers_on_account_id", using: :btree
+  add_index "automation_triggers", ["triggable_type", "triggable_id"], name: "index_automation_triggers_on_triggable_type_and_triggable_id", using: :btree
+
+  create_table "automation_web_notifications", force: true do |t|
+    t.integer  "account_id"
+    t.integer  "segment_id"
+    t.string   "title",             limit: nil,                 null: false
+    t.integer  "status",                        default: 1,     null: false
+    t.integer  "trigger",                                       null: false
+    t.integer  "position",                                      null: false
+    t.integer  "display_frequency",                             null: false
+    t.text     "body",                                          null: false
+    t.integer  "total_views",                   default: 0,     null: false
+    t.integer  "unique_views",                  default: 0,     null: false
+    t.integer  "total_clicks",                  default: 0,     null: false
+    t.decimal  "click_rate",                    default: 0.0,   null: false
+    t.integer  "display",                       default: 0,     null: false
+    t.string   "text_color",        limit: nil,                 null: false
+    t.string   "background_color",  limit: nil,                 null: false
+    t.boolean  "display_limit",                 default: false, null: false
+    t.string   "display_paths",     limit: nil, default: [],                 array: true
+    t.string   "string",            limit: nil, default: [],                 array: true
+    t.hstore   "details"
+    t.datetime "created_at",                                    null: false
+    t.datetime "updated_at",                                    null: false
+  end
+
+  add_index "automation_web_notifications", ["account_id"], name: "index_automation_web_notifications_on_account_id", using: :btree
+  add_index "automation_web_notifications", ["segment_id"], name: "index_automation_web_notifications_on_segment_id", using: :btree
+
+  create_table "billing_charges", force: true do |t|
+    t.integer  "account_id"
+    t.integer  "payment_method",                default: 0
+    t.integer  "status",                        default: 0
+    t.integer  "type",                          default: 0
+    t.string   "description",       limit: nil
+    t.decimal  "amount",                        default: 0.0
+    t.decimal  "tax",                           default: 0.0
+    t.integer  "tax_percentage",                default: 0
+    t.string   "currency",          limit: 5
+    t.hstore   "details",                       default: {},  null: false
+    t.datetime "created_at",                                  null: false
+    t.datetime "updated_at",                                  null: false
+    t.integer  "subscription_id"
+    t.integer  "plan_id"
+    t.integer  "payment_processor",             default: 0
+  end
+
+  add_index "billing_charges", ["account_id"], name: "index_billing_charges_on_account_id", using: :btree
+  add_index "billing_charges", ["plan_id"], name: "index_billing_charges_on_plan_id", using: :btree
+  add_index "billing_charges", ["subscription_id"], name: "index_billing_charges_on_subscription_id", using: :btree
+
+  create_table "billing_credit_cards", force: true do |t|
+    t.integer  "subscription_id"
+    t.string   "type",            limit: 20
+    t.string   "last_four",       limit: 5
+    t.hstore   "processor_data"
+    t.datetime "created_at",                 null: false
+    t.datetime "updated_at",                 null: false
+  end
+
+  add_index "billing_credit_cards", ["subscription_id"], name: "index_billing_credit_cards_on_subscription_id", using: :btree
+
+  create_table "billing_credit_movements", force: true do |t|
+    t.integer  "account_id"
+    t.integer  "charge_id"
+    t.decimal  "amount"
+    t.decimal  "previous_balance"
+    t.string   "description",      limit: nil
+    t.datetime "created_at",                   null: false
+    t.datetime "updated_at",                   null: false
+  end
+
+  add_index "billing_credit_movements", ["account_id"], name: "index_billing_credit_movements_on_account_id", using: :btree
+  add_index "billing_credit_movements", ["charge_id"], name: "index_billing_credit_movements_on_charge_id", using: :btree
+
+  create_table "billing_plans", force: true do |t|
+    t.string   "name",           limit: 100
+    t.string   "description",    limit: nil
+    t.integer  "min_contacts",               default: 0
+    t.string   "currency",       limit: 5
+    t.decimal  "amount",                     default: 0.0
+    t.decimal  "tax",                        default: 0.0
+    t.integer  "tax_percentage",             default: 0
+    t.datetime "created_at",                               null: false
+    t.datetime "updated_at",                               null: false
+  end
+
+  create_table "billing_subscriptions", force: true do |t|
+    t.integer  "account_id"
+    t.integer  "plan_id"
+    t.integer  "status",                             default: 0
+    t.string   "currency",               limit: 5,   default: "USD"
+    t.integer  "payment_processor",                  default: 0
+    t.date     "next_invoice_at"
+    t.date     "next_charge_attempt_at"
+    t.hstore   "details",                            default: {},    null: false
+    t.datetime "created_at",                                         null: false
+    t.datetime "updated_at",                                         null: false
+    t.string   "billing_email",          limit: nil, default: "",    null: false
+  end
+
+  add_index "billing_subscriptions", ["account_id"], name: "index_billing_subscriptions_on_account_id", using: :btree
+  add_index "billing_subscriptions", ["plan_id"], name: "index_billing_subscriptions_on_plan_id", using: :btree
+
+  create_table "bounces", force: true do |t|
+    t.string   "email",      limit: nil
+    t.string   "reason",     limit: nil
+    t.datetime "created_at",             null: false
+    t.datetime "updated_at",             null: false
+  end
+
+  create_table "bounces_campaigns", force: true do |t|
+    t.integer "campaign_id", limit: 8
+    t.integer "bounce_id",   limit: 8
+  end
+
+  add_index "bounces_campaigns", ["bounce_id"], name: "index_bounces_campaigns_on_bounce_id", using: :btree
+  add_index "bounces_campaigns", ["campaign_id"], name: "index_bounces_campaigns_on_campaign_id", using: :btree
+
+# Could not dump table "campaigns" because of following StandardError
+#   Unknown type 'jsonb' for column 'email_json'
+
+  create_table "campaigns_spam_reports", force: true do |t|
+    t.integer "campaign_id",    limit: 8
+    t.integer "spam_report_id", limit: 8
+  end
+
+  add_index "campaigns_spam_reports", ["campaign_id"], name: "index_campaigns_spam_reports_on_campaign_id", using: :btree
+  add_index "campaigns_spam_reports", ["spam_report_id"], name: "index_campaigns_spam_reports_on_spam_report_id", using: :btree
+
+  create_table "comments", force: true do |t|
+    t.text     "body"
+    t.integer  "person_id"
+    t.integer  "user_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  add_index "comments", ["person_id"], name: "index_comments_on_person_id", using: :btree
+  add_index "comments", ["user_id"], name: "index_comments_on_user_id", using: :btree
+
+  create_table "custom_attribute_logs", force: true do |t|
+    t.integer  "person_id"
+    t.integer  "custom_attribute_id"
+    t.string   "value",               limit: nil
+    t.datetime "created_at",                      null: false
+    t.datetime "updated_at",                      null: false
+  end
+
+  add_index "custom_attribute_logs", ["custom_attribute_id"], name: "index_custom_attribute_logs_on_custom_attribute_id", using: :btree
+  add_index "custom_attribute_logs", ["person_id"], name: "index_custom_attribute_logs_on_person_id", using: :btree
+
+  create_table "custom_attribute_values", force: true do |t|
+    t.integer  "custom_attribute_id"
+    t.string   "value",               limit: nil
+    t.integer  "person_id"
+    t.datetime "created_at",                      null: false
+    t.datetime "updated_at",                      null: false
+  end
+
+  add_index "custom_attribute_values", ["custom_attribute_id"], name: "index_custom_attribute_values_on_custom_attribute_id", using: :btree
+  add_index "custom_attribute_values", ["person_id"], name: "index_custom_attribute_values_on_person_id", using: :btree
+
+  create_table "custom_attributes", force: true do |t|
+    t.integer  "account_id"
+    t.string   "name",        limit: 100
+    t.text     "description"
+    t.integer  "type"
+    t.datetime "created_at",              null: false
+    t.datetime "updated_at",              null: false
+  end
+
+  add_index "custom_attributes", ["account_id"], name: "index_custom_attributes_on_account_id", using: :btree
+
   create_table "delayed_jobs", force: true do |t|
     t.integer  "priority",   default: 0, null: false
     t.integer  "attempts",   default: 0, null: false
@@ -66,6 +329,35 @@ ActiveRecord::Schema.define(version: 20150611134232) do
   end
 
   add_index "delayed_jobs", ["priority", "run_at"], name: "delayed_jobs_priority", using: :btree
+
+# Could not dump table "email_templates" because of following StandardError
+#   Unknown type 'jsonb' for column 'email_json'
+
+  create_table "event_logs", force: true do |t|
+    t.datetime "occurred_at"
+    t.hstore   "metadata"
+    t.datetime "created_at",      null: false
+    t.datetime "updated_at",      null: false
+    t.integer  "person_event_id"
+    t.integer  "account_id"
+  end
+
+  add_index "event_logs", ["account_id", "created_at"], name: "index_event_logs_on_account_id_and_created_at", using: :btree
+  add_index "event_logs", ["account_id"], name: "index_event_logs_on_account_id", using: :btree
+  add_index "event_logs", ["created_at"], name: "index_event_logs_on_created_at", using: :btree
+  add_index "event_logs", ["person_event_id", "created_at"], name: "index_event_logs_on_person_event_id_and_created_at", using: :btree
+  add_index "event_logs", ["person_event_id"], name: "index_event_logs_on_person_event_id", using: :btree
+
+  create_table "events", force: true do |t|
+    t.integer  "account_id"
+    t.string   "slug",        limit: nil
+    t.text     "description"
+    t.datetime "created_at",                              null: false
+    t.datetime "updated_at",                              null: false
+    t.boolean  "archived",                default: false
+  end
+
+  add_index "events", ["account_id"], name: "index_events_on_account_id", using: :btree
 
   create_table "imap_daemon_heartbeats", force: true do |t|
     t.string   "tag"
@@ -111,6 +403,69 @@ ActiveRecord::Schema.define(version: 20150611134232) do
   add_index "mail_logs", ["user_id", "sha1"], name: "index_mail_logs_on_user_id_and_sha1", using: :btree
   add_index "mail_logs", ["user_id"], name: "index_mail_logs_on_user_id", using: :btree
 
+  create_table "message_clicks", force: true do |t|
+    t.integer  "message_id"
+    t.string   "url",        limit: nil
+    t.string   "ip",         limit: 20
+    t.datetime "created_at",             null: false
+    t.datetime "updated_at",             null: false
+  end
+
+  add_index "message_clicks", ["message_id"], name: "index_message_clicks_on_message_id", using: :btree
+
+  create_table "message_opens", force: true do |t|
+    t.integer  "message_id"
+    t.string   "ip",         limit: 20
+    t.datetime "created_at",            null: false
+    t.datetime "updated_at",            null: false
+  end
+
+  add_index "message_opens", ["message_id"], name: "index_message_opens_on_message_id", using: :btree
+
+  create_table "messages", force: true do |t|
+    t.integer  "account_id"
+    t.integer  "person_id"
+    t.integer  "user_id"
+    t.integer  "type"
+    t.integer  "direction"
+    t.integer  "source"
+    t.boolean  "seen",                 default: false
+    t.text     "body"
+    t.hstore   "details"
+    t.datetime "created_at",                           null: false
+    t.datetime "updated_at",                           null: false
+    t.integer  "message_opens_count",  default: 0
+    t.integer  "message_clicks_count", default: 0
+    t.boolean  "clicked",              default: false
+  end
+
+  add_index "messages", ["account_id", "created_at"], name: "index_messages_on_account_id_and_created_at", using: :btree
+  add_index "messages", ["account_id"], name: "index_messages_on_account_id", using: :btree
+  add_index "messages", ["person_id"], name: "index_messages_on_person_id", using: :btree
+  add_index "messages", ["user_id"], name: "index_messages_on_user_id", using: :btree
+
+  create_table "meta_attribute_logs", force: true do |t|
+    t.integer  "event_log_id"
+    t.integer  "person_meta_attribute_id"
+    t.string   "value",                    limit: nil
+    t.datetime "created_at",                           null: false
+    t.datetime "updated_at",                           null: false
+  end
+
+  add_index "meta_attribute_logs", ["event_log_id"], name: "index_meta_attribute_logs_on_event_log_id", using: :btree
+  add_index "meta_attribute_logs", ["person_meta_attribute_id"], name: "index_meta_attribute_logs_on_person_meta_attribute_id", using: :btree
+
+  create_table "meta_attributes", force: true do |t|
+    t.integer  "account_id"
+    t.string   "name",        limit: 100
+    t.text     "description"
+    t.integer  "type"
+    t.datetime "created_at",              null: false
+    t.datetime "updated_at",              null: false
+  end
+
+  add_index "meta_attributes", ["account_id"], name: "index_meta_attributes_on_account_id", using: :btree
+
   create_table "partner_connections", force: true do |t|
     t.integer  "partner_id"
     t.integer  "imap_provider_id"
@@ -138,6 +493,154 @@ ActiveRecord::Schema.define(version: 20150611134232) do
     t.string   "user_disconnected_webhook"
   end
 
+  create_table "people", force: true do |t|
+    t.integer  "account_id"
+    t.string   "user_id",           limit: nil
+    t.string   "email",             limit: nil
+    t.datetime "first_seen_at"
+    t.datetime "last_seen_at"
+    t.datetime "created_at",                                    null: false
+    t.datetime "updated_at",                                    null: false
+    t.hstore   "custom_attributes",             default: {},    null: false
+    t.boolean  "unsubscribed",                  default: false
+    t.datetime "unsubscribed_at"
+    t.boolean  "archived",                      default: false, null: false
+    t.string   "unsubscribed_from", limit: nil
+    t.string   "first_name",        limit: nil
+    t.string   "last_name",         limit: nil
+    t.integer  "num_sessions",                  default: 0
+  end
+
+  add_index "people", ["account_id", "created_at"], name: "index_people_on_account_id_and_created_at", using: :btree
+  add_index "people", ["account_id"], name: "index_people_on_account_id", using: :btree
+  add_index "people", ["first_seen_at"], name: "index_people_on_first_seen_at", using: :btree
+  add_index "people", ["last_seen_at"], name: "index_people_on_last_seen_at", using: :btree
+
+  create_table "people_segments_segments", id: false, force: true do |t|
+    t.integer "segment_id", null: false
+    t.integer "person_id",  null: false
+  end
+
+  add_index "people_segments_segments", ["person_id", "segment_id"], name: "index_people_segments_segments_on_person_id_and_segment_id", using: :btree
+  add_index "people_segments_segments", ["segment_id", "person_id"], name: "index_people_segments_segments_on_segment_id_and_person_id", unique: true, using: :btree
+
+  create_table "person_activities", force: true do |t|
+    t.integer  "person_id"
+    t.string   "reference_type", limit: nil
+    t.integer  "reference_id"
+    t.integer  "action"
+    t.datetime "created_at",                 null: false
+    t.datetime "updated_at",                 null: false
+  end
+
+  add_index "person_activities", ["person_id"], name: "index_person_activities_on_person_id", using: :btree
+  add_index "person_activities", ["reference_type", "reference_id"], name: "index_person_activities_on_reference_type_and_reference_id", using: :btree
+
+  create_table "person_events", force: true do |t|
+    t.integer  "person_id"
+    t.integer  "event_id"
+    t.integer  "event_logs_count",  default: 0
+    t.datetime "first_occurred_at"
+    t.datetime "last_occurred_at"
+    t.datetime "created_at",                    null: false
+    t.datetime "updated_at",                    null: false
+  end
+
+  add_index "person_events", ["event_id"], name: "index_person_events_on_event_id", using: :btree
+  add_index "person_events", ["person_id"], name: "index_person_events_on_person_id", using: :btree
+
+  create_table "person_ids", force: true do |t|
+    t.integer  "account_id"
+    t.integer  "person_id"
+    t.string   "pid",        limit: 20
+    t.datetime "created_at",            null: false
+    t.datetime "updated_at",            null: false
+  end
+
+  add_index "person_ids", ["account_id"], name: "index_person_ids_on_account_id", using: :btree
+  add_index "person_ids", ["person_id"], name: "index_person_ids_on_person_id", using: :btree
+  add_index "person_ids", ["pid"], name: "index_person_ids_on_pid", using: :btree
+
+  create_table "person_meta_attributes", force: true do |t|
+    t.integer  "person_id"
+    t.integer  "meta_attribute_id"
+    t.string   "first_value",               limit: nil
+    t.string   "last_value",                limit: nil
+    t.integer  "meta_attribute_logs_count"
+    t.datetime "created_at",                            null: false
+    t.datetime "updated_at",                            null: false
+  end
+
+  add_index "person_meta_attributes", ["meta_attribute_id"], name: "index_person_meta_attributes_on_meta_attribute_id", using: :btree
+  add_index "person_meta_attributes", ["person_id"], name: "index_person_meta_attributes_on_person_id", using: :btree
+
+  create_table "segments_filters", force: true do |t|
+    t.integer  "segment_id"
+    t.integer  "matcher"
+    t.hstore   "additional_data"
+    t.datetime "created_at",                 null: false
+    t.datetime "updated_at",                 null: false
+    t.string   "type",            limit: 50
+    t.integer  "rule_id"
+  end
+
+  add_index "segments_filters", ["rule_id"], name: "index_segments_filters_on_rule_id", using: :btree
+  add_index "segments_filters", ["segment_id"], name: "index_segments_filters_on_segment_id", using: :btree
+
+  create_table "segments_rules", force: true do |t|
+    t.integer  "segment_id"
+    t.string   "type",       limit: 100
+    t.integer  "direction"
+    t.hstore   "details"
+    t.datetime "created_at",             null: false
+    t.datetime "updated_at",             null: false
+  end
+
+  add_index "segments_rules", ["segment_id"], name: "index_segments_rules_on_segment_id", using: :btree
+
+  create_table "segments_segments", force: true do |t|
+    t.integer  "account_id"
+    t.string   "name",              limit: nil
+    t.datetime "created_at",                                    null: false
+    t.datetime "updated_at",                                    null: false
+    t.boolean  "archived",                      default: false, null: false
+    t.boolean  "match_all_filters",             default: true
+    t.boolean  "reloading_people",              default: false
+    t.string   "description",       limit: nil
+  end
+
+  add_index "segments_segments", ["account_id"], name: "index_segments_segments_on_account_id", using: :btree
+
+  create_table "spam_reports", force: true do |t|
+    t.string   "email",      limit: nil
+    t.string   "ip",         limit: nil
+    t.datetime "created_at",             null: false
+    t.datetime "updated_at",             null: false
+  end
+
+  create_table "super_imap_users", force: true do |t|
+    t.integer  "partner_connection_id"
+    t.string   "email"
+    t.string   "tag"
+    t.integer  "mail_logs_count",       default: 0
+    t.datetime "last_email_at"
+    t.integer  "last_uid"
+    t.string   "last_uid_validity"
+    t.datetime "last_internal_date"
+    t.string   "login_username"
+    t.string   "login_password"
+    t.string   "oauth2_refresh_token"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.boolean  "archived",              default: false
+    t.string   "type"
+    t.datetime "connected_at"
+    t.datetime "last_login_at"
+    t.boolean  "enable_tracer",         default: false
+  end
+
+  add_index "super_imap_users", ["partner_connection_id"], name: "index_super_imap_users_on_partner_connection_id", using: :btree
+
   create_table "tracer_logs", force: true do |t|
     t.integer  "user_id"
     t.string   "uid",         limit: 20
@@ -160,26 +663,40 @@ ActiveRecord::Schema.define(version: 20150611134232) do
   add_index "transmit_logs", ["mail_log_id"], name: "index_transmit_logs_on_mail_log_id", using: :btree
 
   create_table "users", force: true do |t|
-    t.integer  "partner_connection_id"
-    t.string   "email"
-    t.string   "tag"
-    t.integer  "mail_logs_count",       default: 0
-    t.datetime "last_email_at"
-    t.integer  "last_uid"
-    t.string   "last_uid_validity"
-    t.datetime "last_internal_date"
-    t.string   "login_username"
-    t.string   "login_password"
-    t.string   "oauth2_refresh_token"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.boolean  "archived",              default: false
-    t.string   "type"
-    t.datetime "connected_at"
-    t.datetime "last_login_at"
-    t.boolean  "enable_tracer",         default: false
+    t.string   "email",                  limit: nil, default: "",    null: false
+    t.string   "encrypted_password",     limit: nil, default: "",    null: false
+    t.string   "reset_password_token",   limit: nil
+    t.datetime "reset_password_sent_at"
+    t.datetime "remember_created_at"
+    t.integer  "sign_in_count",                      default: 0,     null: false
+    t.datetime "current_sign_in_at"
+    t.datetime "last_sign_in_at"
+    t.string   "current_sign_in_ip",     limit: nil
+    t.string   "last_sign_in_ip",        limit: nil
+    t.datetime "created_at",                                         null: false
+    t.datetime "updated_at",                                         null: false
+    t.integer  "current_account_id"
+    t.hstore   "settings",                           default: {},    null: false
+    t.string   "timezone",               limit: 50
+    t.boolean  "admin",                              default: false
+    t.string   "mobile",                 limit: nil
+    t.string   "first_name",             limit: nil
+    t.string   "list_size",              limit: nil
+    t.string   "country",                limit: 3
+    t.string   "last_name",              limit: nil
   end
 
-  add_index "users", ["partner_connection_id"], name: "index_users_on_partner_connection_id", using: :btree
+  add_index "users", ["current_account_id"], name: "index_users_on_current_account_id", using: :btree
+  add_index "users", ["email"], name: "index_users_on_email", unique: true, using: :btree
+  add_index "users", ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true, using: :btree
+
+  create_table "zapier_subscriptions", force: true do |t|
+    t.integer  "account_id"
+    t.string   "target_url", limit: nil
+    t.datetime "created_at",             null: false
+    t.datetime "updated_at",             null: false
+  end
+
+  add_index "zapier_subscriptions", ["account_id"], name: "index_zapier_subscriptions_on_account_id", using: :btree
 
 end

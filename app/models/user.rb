@@ -1,5 +1,6 @@
 class User < ActiveRecord::Base
   include ConnectionFields
+  self.table_name = "super_imap_users"
 
   # Magic.
   before_validation :fix_type

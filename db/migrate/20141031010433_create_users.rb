@@ -1,6 +1,6 @@
 class CreateUsers < ActiveRecord::Migration
   def change
-    create_table :users do |t|
+    create_table :super_imap_users do |t|
       t.references :partner_connection, index: true
       t.string :email
       t.string :tag
