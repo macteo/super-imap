@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-ruby "2.2.0"
+ruby "2.3.1"
 
 gem 'rails'                     , '4.1.6'
 gem 'sass-rails'                , '~> 4.0.3'
@@ -20,6 +20,7 @@ gem 'airbrake'                  , '~> 4.1.0'
 gem 'activeadmin'               , '1.0.0.pre', :github => 'activeadmin', :ref => '0becbef0'
 gem 'gibberish'                 , '~> 1.4.0'
 gem 'foreman'                   , '~> 0.75.0'
+gem 'figaro'
 
 gem 'rails_stdout_logging'      , :group => [:staging, :production]
 gem 'rails_12factor'            , :group => :production
