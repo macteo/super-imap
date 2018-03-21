@@ -21,6 +21,7 @@ gem 'activeadmin'               , '1.0.0.pre', :git => 'https://github.com/activ
 gem 'gibberish'                 , '~> 1.4.0'
 gem 'foreman'                   , '~> 0.75.0'
 gem 'figaro'
+gem 'rollbar'
 
 gem 'rails_stdout_logging'      , :group => [:staging, :production]
 gem 'rails_12factor'            , :group => :production
