@@ -22,6 +22,7 @@ module SuperIMAP
 
     config.autoload_paths += Dir["#{config.root}/app/interactors"]
     config.autoload_paths += Dir["#{config.root}/app/processes"]
+    config.autoload_paths += Dir["#{config.root}/app/workers"]
 
     encryption_key = ENV['ENCRYPTION_KEY']
     if encryption_key.present?

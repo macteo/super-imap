@@ -1,11 +1,11 @@
 # encoding: utf-8
 
 class CallNewMailWebhook < BaseWebhook
-  attr_accessor :mail_log, :envelope, :raw_eml
+  attr_accessor :mail_log, :in_reply_to, :raw_eml
 
-  def initialize(mail_log, envelope, raw_eml)
+  def initialize(mail_log, in_reply_to, raw_eml)
     self.mail_log = mail_log
-    self.envelope = envelope
+    self.in_reply_to = in_reply_to
     self.raw_eml = raw_eml
   end
 
@@ -23,18 +23,12 @@ class CallNewMailWebhook < BaseWebhook
       :sha1               => mail_log.sha1,
       :user_tag           => user.tag,
       :imap_provider_code => user.connection.imap_provider_code,
-      :envelope           => envelope,
+      :in_reply_to        => in_reply_to,
       :rfc822             => raw_eml
     }
     data[:signature] = calculate_signature(partner.api_key, data[:sha1], data[:timestamp])
 
     # START DEBUGGING!
-    begin
-      envelope.to_json
-    rescue => e
-      Log.info("Problem converting to JSON:\n#{envelope}.")
-    end
-
     begin
       raw_eml.to_json
     rescue => e

@@ -249,7 +249,7 @@ class ProcessUid
   def deploy_webhook
     unless daemon.stress_test_mode
       user_thread.schedule do
-        CallNewMailWebhook.new(mail_log, envelope, raw_eml).delay.run
+        CallNewMailWebhookWorker.perform_async(mail_log.id, envelope.in_reply_to, raw_eml)
       end
     end
     return true
