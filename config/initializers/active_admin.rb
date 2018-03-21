@@ -222,7 +222,7 @@ ActiveAdmin.setup do |config|
     # admin.download_links = proc { can?(:view_download_links) }
 
     admin.build_menu do |menu|
-      menu.add label: 'Sidekiq', priority: 90, url: 'sidekiq'
+      menu.add label: 'Sidekiq', priority: 90, url: '/sidekiq'
     end
   end
 
