@@ -1,5 +1,5 @@
 web:            bundle exec unicorn -p $PORT -c ./config/unicorn.rb
-worker:         bundle exec sidekiq -q default
+worker:         bundle exec sidekiq -c 2 -q default
 
 # Heroku dynos have thread limits. (1x = 256, 2x = 512, px =
 # 32767). For 1x and 2x dynos, we set MAX_USER_THREADS way below the
