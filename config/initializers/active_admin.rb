@@ -221,6 +221,9 @@ ActiveAdmin.setup do |config|
     # #   (for example, with cancan)
     # admin.download_links = proc { can?(:view_download_links) }
 
+    admin.build_menu do |menu|
+      menu.add label: 'Sidekiq', priority: 90, url: 'sidekiq'
+    end
   end
 
 

@@ -315,7 +315,7 @@ class ImapClient::Daemon
       # If we found a user, schedule a tracer email.
       if user
         user.reload
-        ScheduleTracerEmails.new(user, self.num_tracers).delay.run
+        ScheduleTracerEmailsWorker.perform_async(user.id, self.num_tracers)
       end
 
       light_sleep self.tracer_interval
