@@ -146,6 +146,7 @@ GEM
       byebug (~> 3.4)
       pry (~> 0.10)
     rack (1.5.2)
+    rack-cors (1.0.2)
     rack-protection (2.0.0)
       rack
     rack-test (0.6.3)
@@ -250,6 +251,7 @@ DEPENDENCIES
   pg (~> 0.17.1)
   pry
   pry-byebug
+  rack-cors
   rails (= 4.1.6)
   rails_12factor
   rails_stdout_logging

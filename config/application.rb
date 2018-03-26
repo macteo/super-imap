@@ -32,5 +32,18 @@ module SuperIMAP
     end
 
     config.log_level = String(ENV['LOG_LEVEL'] || "info").upcase
+
+    config.middleware.use Rack::Cors do
+      allow do
+        origins '*'
+        resource '/api/v1/*',
+          headers: ['Origin', 'Accept', 'Content-Type', 'x-api-key'],
+          methods: [:get, :post, :put]
+
+        resource '/users/*',
+          headers: ['Origin', 'Accept', 'Content-Type'],
+          methods: [:get]
+      end
+    end
   end
 end

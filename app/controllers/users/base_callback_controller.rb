@@ -1,4 +1,5 @@
 class Users::BaseCallbackController < ApplicationController
+  skip_before_action :verify_authenticity_token
   before_action :load_user
   before_action :validate_signature
 
