@@ -7,15 +7,19 @@ module Oauth2::DisconnectsHelper
     url = "https://accounts.google.com/o/oauth2/revoke?token=#{URI.escape(token)}"
     Net::HTTP.get_response(URI(url))
 
-    # Throw away our credentials.
-    self.user.update_attributes!(
-      :email                => nil,
-      :oauth2_refresh_token => nil,
-      :connected_at         => nil)
+    ActiveRecord::Base.transaction do
+      # Throw away our credentials.
+      user.update_attributes!(
+        :email                => nil,
+        :oauth2_refresh_token => nil,
+        :connected_at         => nil)
 
-    CallUserDisconnectedWebhookWorker.perform_async(user.id)
+      CallUserDisconnectedWebhook.new(user).run
+    end
 
-    # Redirect.
     redirect_to_success_url
+  rescue => e
+    Log.exception(e)
+    redirect_to_failure_url
   end
 end

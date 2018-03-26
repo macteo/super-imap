@@ -37,15 +37,18 @@ module Oauth2::ConnectsHelper
       params[:code],
       :redirect_uri => callback_users_connect_url())
 
-    user.update_attributes!(
-      :email                => oauth2_email,
-      :oauth2_refresh_token => oauth2_token.refresh_token,
-      :connected_at         => Time.now)
+    ActiveRecord::Base.transaction do
+      user.update_attributes!(
+        :email                => oauth2_email,
+        :oauth2_refresh_token => oauth2_token.refresh_token,
+        :connected_at         => Time.now)
 
-    CallUserConnectedWebhookWorker.perform_async(user.id)
+      CallUserConnectedWebhook.new(user).run
+    end
 
     redirect_to_success_url
   rescue => e
+    user.destroy
     Log.exception(e)
     redirect_to_failure_url
   end
