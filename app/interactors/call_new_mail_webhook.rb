@@ -23,18 +23,9 @@ class CallNewMailWebhook < BaseWebhook
       :sha1               => mail_log.sha1,
       :user_tag           => user.tag,
       :imap_provider_code => user.connection.imap_provider_code,
-      :in_reply_to        => in_reply_to,
-      :rfc822             => raw_eml
+      :in_reply_to        => in_reply_to
     }
     data[:signature] = calculate_signature(partner.api_key, data[:sha1], data[:timestamp])
-
-    # START DEBUGGING!
-    begin
-      raw_eml.to_json
-    rescue => e
-      Log.info("Problem converting to JSON:\n#{raw_eml}.")
-    end
-    # END DEBUGGING!
 
     # Post the data
     begin
